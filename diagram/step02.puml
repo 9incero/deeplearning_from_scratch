@@ -1,0 +1,19 @@
+@startuml
+class Variable {
+  + data
+  + __init__(data)
+}
+
+abstract class Function {
+  + {abstract} forward(x)
+  + __call__(input: Variable)
+}
+
+class Square {
+  + forward(x)
+}
+
+Function <|-- Square
+Function --> Variable
+Square --> Variable
+@enduml

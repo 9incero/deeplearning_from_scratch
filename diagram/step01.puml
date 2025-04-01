@@ -1,0 +1,6 @@
+@startuml
+class Variable {
+  + data
+  + __init__(data)
+}
+@enduml

@@ -43,6 +43,12 @@ class Function:
 
         return output
 
+    def forward(self, x):
+        raise NotImplementedError()
+
+    def backward(self, gy):
+        NotImplementedError()
+
 
 class Square(Function):
     def forward(self, x):

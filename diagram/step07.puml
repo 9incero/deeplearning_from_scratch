@@ -1,0 +1,34 @@
+@startuml
+class Variable {
+  + data
+  + grad
+  + creator
+  + __init__(data)
+  + set_creator(func)
+  + backward()
+}
+
+abstract class Function {
+  + {abstract} forward(x)
+  + {abstract} backward(gy)
+  + __call__(input: Variable)
+  # input: Variable
+  # output: Variable
+}
+
+class Square {
+  + forward(x)
+  + backward(gy)
+}
+
+class Exp {
+  + forward(x)
+  + backward(gy)
+}
+
+Function <|-- Square
+Function <|-- Exp
+Function --> Variable
+Square --> Variable
+Exp --> Variable
+@enduml 
