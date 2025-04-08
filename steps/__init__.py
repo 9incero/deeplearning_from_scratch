@@ -3,4 +3,4 @@
 # from .step03 import Exp
 from .step04 import numerical_diff
 from .step12 import Function, add
-from .step13 import Variable, add, square
+from .step14 import Variable, add
