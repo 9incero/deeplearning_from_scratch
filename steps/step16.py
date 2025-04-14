@@ -10,16 +10,28 @@ class Variable:
                 raise TypeError("{}은(는) 지원하지 않습니다.".format(type(data)))
         self.data = data
         self.grad = None
+        self.generation = 0
         self.creator = None
 
     def set_creator(self, func):
         self.creator = func
+        self.generation = func.generation + 1
 
     def backward(self):
         if self.grad is None:
             self.grad = np.ones_like(self.data)
 
-        funcs = [self.creator]
+        funcs = []
+        seen_set = set()
+
+        def add_func(f):
+            if f not in seen_set:
+                funcs.append(f)
+                seen_set.add(f)
+                funcs.sort(key=lambda x: x.generation)
+
+        add_func(self.creator)
+
         while funcs:
             f = funcs.pop()
             gys = [output.grad for output in f.outputs]
@@ -34,7 +46,7 @@ class Variable:
                 else:
                     x.grad = x.grad + gx
                 if x.creator is not None:
-                    funcs.append(x.creator)
+                    add_func(x.creator)
 
     def cleargrad(self):
         self.grad = None
@@ -48,11 +60,12 @@ class Function:
             ys = (ys,)
         outputs = [Variable(as_array(y)) for y in ys]
 
-        for output in outputs:
-            output.set_creator(self)
-
         self.inputs = inputs
         self.outputs = outputs
+
+        self.generation = max([x.generation for x in self.inputs])
+        for output in outputs:
+            output.set_creator(self)
 
         return outputs if len(outputs) > 1 else outputs[0]
 

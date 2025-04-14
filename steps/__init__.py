@@ -2,5 +2,5 @@
 # from .step02 import Function, Square
 # from .step03 import Exp
 from .step04 import numerical_diff
-from .step12 import Function, add
-from .step14 import Variable, add
+from .step12 import Function
+from .step16 import Variable, add, square
