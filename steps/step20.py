@@ -4,7 +4,7 @@ def as_array(x):
     if np.isscalar(x):
         return np.array(x)
     else:
-        x
+        return x
 
 class Variable:
     def __init__(self, data, name= None):

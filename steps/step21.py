@@ -5,7 +5,7 @@ def as_array(x):
     if np.isscalar(x):
         return np.array(x)
     else:
-        x
+        return x
 
 def as_variable(obj):
     if isinstance(obj, Variable):
