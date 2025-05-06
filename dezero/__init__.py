@@ -4,3 +4,5 @@ from dezero.core_simple import using_config
 from dezero.core_simple import no_grad
 from dezero.core_simple import as_array
 from dezero.core_simple import as_variable
+
+from dezero.utils import plot_dot_graph
