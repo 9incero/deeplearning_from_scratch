@@ -118,29 +118,6 @@ class Function:
         raise NotImplementedError()
 
 
-class Exp(Function):
-    def forward(self, x):
-        y=np.exp(x)
-        return y
-    def backward(self, gy):
-        x=self.input.data
-        gx=np.exp(x)*gy
-        return gx
-       
-class Square(Function):
-    def forward(self, x):
-        y=x**2
-        return y
-    def backward(self, gy):
-        x=self.inputs[0].data
-        gx=2*x*gy
-        return gx
-
-def square(x):
-    return Square()(x)
-
-def exp(x):
-    return Exp()(x)
 
 def as_array(x):
     if np.isscalar(x):
@@ -236,17 +213,14 @@ class Pow(Function):
 def pow(x, c):
     return Pow(c)(x)
 
-Variable.__mul__=mul
-Variable.__rmul__=mul
-Variable.__add__=add
-Variable.__radd__=add
-Variable.__neg__=neg
-Variable.__sub__=sub
-Variable.__rsub__=rsub
-Variable.__div__=div
-Variable.__rdiv__=rdiv
-Variable.__pow__=pow
-
-x=Variable(np.array(2.0))
-y=x**3
-print(y)
+def setup_variable():
+    Variable.__mul__=mul
+    Variable.__rmul__=mul
+    Variable.__add__=add
+    Variable.__radd__=add
+    Variable.__neg__=neg
+    Variable.__sub__=sub
+    Variable.__rsub__=rsub
+    Variable.__div__=div
+    Variable.__rdiv__=rdiv
+    Variable.__pow__=pow
