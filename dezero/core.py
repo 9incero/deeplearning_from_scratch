@@ -79,7 +79,7 @@ class Mul(Function):
         return y
 
     def backward(self, gy):
-        x0, x1 = self.inputs[0].data, self.inputs[1].data
+        x0, x1 = self.inputs
         return gy * x1, gy * x0
 
 
@@ -122,7 +122,7 @@ class Div(Function):
         return y
 
     def backward(self, gy):
-        x0, x1 = self.inputs[0].data, self.inputs[1].data
+        x0, x1 = self.inputs
         gx0 = gy / x1
         gx1 = gy * (-x0 / x1**2)
         return gx0, gx1
@@ -145,7 +145,7 @@ class Pow(Function):
         return y
 
     def backward(self, gy):
-        x = self.inputs[0].data
+        x = self.inputs[0]
         c = self.c
         gx = c * x ** (c - 1) * gy
         return gx
@@ -170,9 +170,9 @@ class Variable:
         self.creator = func
         self.generation = func.generation + 1
 
-    def backward(self, retain_grad=False):
+    def backward(self, retain_grad=False, create_graph = False):
         if self.grad is None:
-            self.grad = np.ones_like(self.data)
+            self.grad = Variable(np.ones_like(self.data))
 
         funcs = []
         seen_set = set()
@@ -188,22 +188,24 @@ class Variable:
         while funcs:
             f = funcs.pop()
             gys = [output().grad for output in f.outputs]
-            gxs = f.backward(*gys)
+            
+            with using_config('enable_backprop', create_graph):
+                gxs = f.backward(*gys)
 
-            if not isinstance(gxs, tuple):
-                gxs = (gxs,)
+                if not isinstance(gxs, tuple):
+                    gxs = (gxs,)
 
-            for x, gx in zip(f.inputs, gxs):
-                if x.grad is None:
-                    x.grad = gx
-                else:
-                    x.grad = x.grad + gx
-                if x.creator is not None:
-                    add_func(x.creator)
+                for x, gx in zip(f.inputs, gxs):
+                    if x.grad is None:
+                        x.grad = gx
+                    else:
+                        x.grad = x.grad + gx
+                    if x.creator is not None:
+                        add_func(x.creator)
 
-            if not retain_grad:
-                for output in f.outputs:
-                    output().grad = None
+                if not retain_grad:
+                    for output in f.outputs:
+                        output().grad = None
 
     def cleargrad(self):
         self.grad = None
