@@ -84,6 +84,9 @@ class Variable:
                 for y in f.outputs:
                     y().grad = None
 
+    def cleargrad(self):
+        self.grad = None
+        
 class Config:
     enable_backprop = True
 
@@ -142,6 +145,7 @@ def using_config(name, value):
 
 def no_grad():
     return using_config('enable_backprop', False)
+
 
 # x = Variable(np.array([[1,2,3], [4, 5, 6]]))
 # print(x)
