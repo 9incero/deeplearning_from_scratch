@@ -5,7 +5,7 @@ import contextlib
 
 class Config:
     enable_backprop=True
-    
+
 @contextlib.contextmanager
 def using_config(name, value):
     old_value=getattr(Config, name)
@@ -84,7 +84,6 @@ class Variable:
 
             #역전파 계산
             gys = [output().grad for output in f.outputs]
-            gxs =  f.backward(*gys)
 
             with using_config('enable_backprop', create_graph):
                 gxs=f.backward(*gys)
@@ -185,7 +184,7 @@ class Pow(Function):
         y=x**self.c 
         return y
     def backward(self, gy):
-        x=self.inputs
+        x, =self.inputs
         c=self.c
         gx=c*x**(c-1)*gy
         return gx

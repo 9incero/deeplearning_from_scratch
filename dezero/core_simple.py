@@ -75,6 +75,8 @@ class Variable:
         
         while funcs:
             f = funcs.pop()
+
+            #역전파 계산
             gys = [output().grad for output in f.outputs]
             gxs =  f.backward(*gys)
 
@@ -97,6 +99,7 @@ class Variable:
 class Function:
     def __call__(self, *inputs):
         inputs=[as_variable(x) for x in inputs]
+        #forward 계산
         xs = [input.data for input in inputs]
         ys = self.forward(*xs)
         if not isinstance(ys, tuple):
@@ -105,6 +108,7 @@ class Function:
         
         if Config.enable_backprop:            
             self.generation=max([x.generation for x in inputs])
+            #연결을 만듦 -> 자신을 알려줌
             for output in outputs:
                 output.set_creator(self)
             self.inputs = inputs
