@@ -15,6 +15,7 @@ def gx2(x):
 x=Variable(np.array(2.0))
 iters=10
 
+
 for i in range(iters):
     print(i, x)
 
