@@ -2,6 +2,7 @@ import numpy as np
 import weakref
 import contextlib
 
+import dezero
 from steps.step09 import as_array
 
 
@@ -210,6 +211,18 @@ class Variable:
     def cleargrad(self):
         self.grad = None
 
+    def reshape(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        return dezero.functions.reshape(self, shape)
+        
+    def transpose(self):
+        return dezero.functions.transpose(self)
+    
+    @property
+    def T(self):
+        return dezero.functions.transpose(self)
+    
     @property
     def shape(self):
         return self.data.shape
