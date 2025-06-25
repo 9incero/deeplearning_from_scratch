@@ -283,3 +283,7 @@ class Variable:
     __pow__ = pow
 
     __array_priority__ = 200
+
+
+class Parameter(Variable):
+    pass
