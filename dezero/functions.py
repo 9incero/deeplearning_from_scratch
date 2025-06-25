@@ -96,6 +96,7 @@ class BroadcastTo(Function):
     def forward(self, x):
         self.x_shape = x.shape
         y = np.broadcast_to(x, self.shape)
+        return y
     
     def backward(self, gy):
         gx = utils.sum_to(gy, self.x_shape)
@@ -122,7 +123,7 @@ class SumTo(Function):
 def sum_to(x, shape):
     if x.shape == shape:
         return as_variable(x)
-    return SumTo(shape(x))
+    return SumTo(shape)(x)
 
 class MatMul(Function):
     def forward(self, x, W):
@@ -137,3 +138,19 @@ class MatMul(Function):
     
 def matmul(x, W):
     return MatMul()(x, W)
+
+class MeanSquaredError(Function):
+    def forward(self, x0, x1):
+        diff = x0 - x1
+        y = (diff ** 2).sum() / len(diff)
+        return y
+    
+    def backward(self, gy):
+        x0, x1 = self.inputs
+        diff = x0 - x1
+        gx0 = gy * diff * (2. / len(diff))
+        gx1 = -gx0
+        return gx0, gx1
+    
+def mean_squared_error(x0, x1):
+    return MeanSquaredError()(x0, x1)
