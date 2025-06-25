@@ -150,6 +150,22 @@ class MeanSquaredError(Function):
 def mean_squared_error(x0, x1):
     return MeanSquaredError()(x0,x1)
 
+class Linear(Function):
+    def forward(self, x, W, b):
+        y=x.dot(W)
+        if b is not None:
+            y+=b
+        return y
+    def backward(self, gy):
+        x, W, b=self.inputs
+        gb=None if b.data is None else sum_to(gy, b.shape)
+        gx=matmul(gy, W.T)
+        gW=matmul(x.T, gy)
+        return gx, gW, gb
+
+def linear(x, W, b=None):
+    return Linear()(x,W,b)
+    
 def linear_simple(x,W,b=None):
     t=matmul(x,W)
     if b is None:
@@ -160,5 +176,32 @@ def linear_simple(x,W,b=None):
 
 def sigmoid_simple(x):
     x=as_variable(x)
-    y=1/(1+math.exp(-x))
+    y=1/(1+exp(-x))
     return y
+
+class Sigmoid(Function):
+    def forward(self, x):
+        # xp=np.get_array_module(x)
+        # y=xp,tanh(x*0.5)*0.5+0.5
+        y = 1 / (1 + np.exp(-x))
+        return y
+    def backward(self, gy):
+        y=self.outputs[0]()
+        gx=gy*y*(1-y)
+        return gx
+
+def sigmoid(x):
+    return Sigmoid()(x)
+
+class Exp(Function):
+    def forward(self, x):
+        y=np.exp(x)
+        return y
+    def backward(self, gy):
+        y = self.outputs[0]()
+        gx=gy*y
+        return gx
+    
+def exp(x):
+    x=as_variable(x)
+    return Exp()(x)
