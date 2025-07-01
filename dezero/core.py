@@ -1,5 +1,20 @@
 import numpy as np
 import weakref
+from contextlib import contextmanager
+import dezero
+
+
+@contextmanager
+def using_config(name, value):
+    old_value = getattr(Config, name)
+    setattr(Config, name, value)
+    try:
+        yield
+    finally:
+        setattr(Config, name, old_value)
+
+def no_grad():
+    return using_config('enable_backprop', False)
 
 def as_array(x):
     if np.isscalar(x):
@@ -87,6 +102,21 @@ class Variable:
     
     def cleargrad(self):
         self.grad = None
+    
+    def reshape(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        return dezero.functions.reshape(self, shape)
+    
+    def transpose(self):
+        return dezero.functions.transpose(self)
+    
+    @property
+    def T(self):
+        return dezero.functions.transpose(self)
+    
+    def sum(self, axis = None, keepdims=False):
+        return dezero.function.sum(self, axis, keepdims)
         
 class Config:
     enable_backprop = True
@@ -115,10 +145,16 @@ class Function:
     
 class Add(Function):
     def forward(self, x0, x1):
+        self.x0_shape, self.x1_shape = x0.shape, x1.shape
         y = x0 + x1
         return y
+    
     def backward(self, gy):
-        return gy, gy
+        gx0, gx1 = gy, gy
+        if self.x0_shape != self.x1_shape:
+            gx0 = dezero.functions.sum_to(gx0, self.x0_shape)
+            gx1 = dezero.functions.sum_to(gx1, self.x1_shape)
+        return gx0, gx1
 
 def add(x0, x1):
     x1 = as_array(x1)
@@ -136,16 +172,6 @@ class Square(Function):
 def square(x):
     return Square()(x)
 
-def using_config(name, value):
-    old_value = getattr(Config. name)
-    setattr(Config, name, value)
-    try:
-        yield
-    finally:
-        setattr(Config, name, old_value)
-
-def no_grad():
-    return using_config('enable_backprop', False)
 
 # x = Variable(np.array([[1,2,3], [4, 5, 6]]))
 # print(x)
@@ -205,6 +231,7 @@ def rdiv(x0, x1):
     x1 = as_array(x1)
     return Div()(x1, x0)
 
+
 class Pow(Function):
     def __init__(self, c):
         self.c = c
@@ -221,6 +248,22 @@ class Pow(Function):
 def pow(x, c):
     return Pow(c)(x)
 
+class Exp(Function):
+    def forward(self, x):
+        y = np.exp(x)
+        return y
+    
+    def backward(self, gy):
+        x, = self.inputs
+        gx = gy * np.exp(x)
+        return gx
+    
+def exp(x):
+    return Exp()(x)
+
+class Parameter(Variable):
+    pass
+
 def setup_variable():
     Variable.__mul__ = mul
     Variable.__add__ = add
@@ -232,3 +275,4 @@ def setup_variable():
     Variable.__truediv__ = div
     Variable.__rtruediv__ = rdiv
     Variable.__pow__ = pow
+    Variable.__exp__ = exp             

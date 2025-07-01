@@ -1,6 +1,7 @@
 if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    
 import subprocess
 import numpy as np
 from dezero import Variable
@@ -60,8 +61,38 @@ def plot_dot_graph(output, verbose=True, to_file ='graph.png'):
     extension = os.path.splitext(to_file)[1][1:]
     cmd = 'dot {} -T {} -o {}'.format(graph_path, extension, to_file)
     subprocess.run(cmd, shell=True)
+
+def sum_to(x, shape):
+    ndim = len(shape)
+    lead = x.ndim - ndim
+    lead_axis = tuple(range(lead))
     
+    axis = tuple([i + lead for i, sx in enumerate(shape) if sx == 1])
+    y = x.sum(lead_axis + axis, keepdims=True)
+    if lead > 0:
+        y = y.squeeze(lead_axis)
+    return y
     
+def reshape_sum_backward(gy, x_shape, axis, keepdims):
+    ndim = len(x_shape)
+    tupled_axis = axis
+    if axis is None:
+        tupled_axis = None
+    elif not isinstance(axis, tuple):
+        tupled_axis = (axis, )
+    
+    if not (ndim == 0 or tupled_axis is None or keepdims):
+        actual_axis = [a if a >= 0 else a + ndim for a in tupled_axis] #음수 axis가 있을 경우 양수로 변환
+        shape = list(gy.shape)
+        for a in sorted(actual_axis):
+            shape.insert(a, 1) # sum으로 날아간 차원에 1을 삽입해서 x와 broadcast-compatilble하게 만듦
+    else:
+        shape = gy.shape
+    
+    gy = gy.reshape(shape)
+    return gy
+
+
 # x = Variable(np.random.randn(2, 3))
 # x.name = 'x'
 # print(_dot_var(x))

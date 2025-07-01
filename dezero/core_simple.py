@@ -1,5 +1,7 @@
 import numpy as np
 import weakref
+from contextlib import contextmanager
+
 
 def as_array(x):
     if np.isscalar(x):
@@ -55,7 +57,7 @@ class Variable:
     
     def backward(self, retain_grad = False):
         if self.grad is None:
-            self.grad = np.ones_like(self.data)
+            self.grad = Variable(np.ones_like(self.data))
         funcs = []
         seen_set = set()
         
@@ -135,8 +137,9 @@ class Square(Function):
 def square(x):
     return Square()(x)
 
+@contextmanager
 def using_config(name, value):
-    old_value = getattr(Config. name)
+    old_value = getattr(Config, name)
     setattr(Config, name, value)
     try:
         yield
