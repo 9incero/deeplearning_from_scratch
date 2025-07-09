@@ -18,6 +18,7 @@ else:
     from dezero.core import Parameter
     from dezero.layers import Layer
     from dezero.models import Model
-    
+    from dezero.dataloaders import DataLoader
+    from dezero.datasets import Dataset
 
 from dezero.utils import plot_dot_graph

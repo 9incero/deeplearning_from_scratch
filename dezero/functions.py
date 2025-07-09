@@ -1,6 +1,7 @@
 import numpy as np
 
 from dezero import utils
+from dezero.core_simple import Variable
 from .core import Function, as_variable
 
 class Sin(Function):
@@ -307,3 +308,15 @@ def softmax_cross_entropy_simple(x, t):
     y = -1 * sum(tlog_p) / N
     return y
     
+def as_array(x):
+    if np.isscalar(x):
+        return np.array(x)
+    return x
+
+def accuracy(y, t):
+    y, t = as_variable(y), as_variable(t)
+    
+    pred = y.data.argmax(axis=1).reshape(t.shape)
+    result = (pred == t.data)
+    acc = result.mean()
+    return Variable(as_array(acc))
