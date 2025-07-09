@@ -269,6 +269,9 @@ class Variable:
             return "variable(None)"
         p = str(self.data).replace("\n", "\n" + " " * 9)
         return "variable(" + p + ")"
+    
+    def __getitem__(self, slices):
+        return dezero.functions.get_item(self, slices)
 
     __add__ = add
     __radd__ = add
@@ -281,7 +284,7 @@ class Variable:
     __truediv__ = div
     __rtruediv__ = rdiv
     __pow__ = pow
-
+    
     __array_priority__ = 200
 
 
