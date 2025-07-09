@@ -46,7 +46,6 @@ class MomentumSGD(Optimizer):
         if v_key not in self.vs:
             self.vs[v_key]=np.zeros_like(param.data)
         v=self.vs[v_key]
-        v+=self.momentum
+        v*=self.momentum
         v-=self.lr*param.grad.data
         param.data+=v
-        
