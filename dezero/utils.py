@@ -4,7 +4,6 @@ if '__file__' in globals():
     
 import subprocess
 import numpy as np
-from dezero import Variable
 
 def _dot_var(v, verbose=False):
     dot_var = '{} [label ="{}", color = orange, style=filled]\n'

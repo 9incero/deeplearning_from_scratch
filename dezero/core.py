@@ -2,6 +2,7 @@ import numpy as np
 import weakref
 from contextlib import contextmanager
 import dezero
+from dezero import utils, functions
 
 
 @contextmanager
@@ -16,9 +17,9 @@ def using_config(name, value):
 def no_grad():
     return using_config('enable_backprop', False)
 
-def as_array(x):
+def as_array(x, array_module = True):
     if np.isscalar(x):
-        return np.array(x)
+        return array_module.array(x)
     else:        
         return x
 
@@ -27,11 +28,17 @@ def as_variable(obj):
         return obj
     return Variable(obj)
 
+try:
+    import cupy
+    array_types = (np.ndarray, cupy.ndarray)
+except ImportError:
+    array_types = (np.ndarray)
+    
 class Variable:
     __array_priority__ = 200
     def __init__(self, data, name= None):
         if data is not None:
-            if not isinstance(data, np.ndarray):
+            if not isinstance(data, array_types):
                 raise TypeError('{}은(는) 지원하지 않습니다.'.format(type(data)))
         self.data = data
         self.name = name
@@ -70,6 +77,7 @@ class Variable:
     
     def backward(self, retain_grad = False, create_graph=False):
         if self.grad is None:
+            xp = dezero.cuda.get_array_module(self.data)
             self.grad = Variable(np.ones_like(self.data))
         funcs = []
         seen_set = set()
@@ -117,7 +125,14 @@ class Variable:
     
     def sum(self, axis = None, keepdims=False):
         return dezero.function.sum(self, axis, keepdims)
-        
+    
+    def to_cpu(self):
+        if self.data is not None:
+            self.data = dezero.cuda.as_numpy(self.data) 
+    
+    def to_gpu(self):
+        if self.data is not None:
+            self.data = dezero.cuda.as_cupy(self.data)
 class Config:
     enable_backprop = True
 
@@ -157,7 +172,7 @@ class Add(Function):
         return gx0, gx1
 
 def add(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
     return Add()(x0, x1)
 
 class Square(Function):
@@ -186,7 +201,7 @@ class Mul(Function):
         return gy * x1, gy * x0
 
 def mul(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, dezero.cuda.get_array_module(x0.data))
     return Mul()(x0, x1)
 def rmul(x0, x1):
     x1 = as_array(x1)
@@ -264,6 +279,19 @@ def exp(x):
 class Parameter(Variable):
     pass
 
+class GetItem(Function):
+    def __init__(self, slices):
+        self.slices = slices
+    def forward(self, x):
+        y = x[self.slices]
+        return y
+    def backward(self, gy):
+        # utils.get_item_grad는 DeZero util에 이미 정의돼 있음
+        return utils.get_item_grad(gy, self.slices, self.inputs[0].shape)
+
+def get_item(x, slices):
+    return GetItem(slices)(x)
+
 def setup_variable():
     Variable.__mul__ = mul
     Variable.__add__ = add
@@ -275,4 +303,5 @@ def setup_variable():
     Variable.__truediv__ = div
     Variable.__rtruediv__ = rdiv
     Variable.__pow__ = pow
-    Variable.__exp__ = exp             
+    Variable.__exp__ = exp 
+    Variable.__getitem__ = functions.get_item

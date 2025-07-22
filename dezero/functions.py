@@ -1,10 +1,11 @@
 import numpy as np
-from dezero.core import Function, as_variable
-from dezero import utils
+from dezero.core import Function, as_variable, as_array, Variable
+from dezero import utils, cuda
 
 class Exp(Function):
     def forward(self, x):
-        y = np.exp(x)
+        xp = cuda.get_array_module(x)
+        y = np.exp(xp)
         return y
     
     def backward(self, gy):
@@ -18,7 +19,8 @@ def exp(x):
 
 class Sin(Function):
     def forward(self, x):
-        y = np.sin(x)
+        xp = cuda.get_array_module(x)
+        y = np.sin(xp)
         return y
     
     def backward(self, gy):
@@ -31,7 +33,8 @@ def sin(x):
 
 class Cos(Function):
     def forward(self, x):
-        y = np.cos(x)
+        xp = cuda.get_array_module(x)        
+        y = np.cos(xp)
         return y
     
     def backward(self, gy):
@@ -44,7 +47,8 @@ def cos(x):
 
 class Tanh(Function):
     def forward(self, x):
-        y = np.tanh(x)
+        xp = cuda.get_array_module(x)
+        y = np.tanh(xp)
         return y
     def backward(self, gy):
         y = self.outputs[0]()
@@ -73,7 +77,8 @@ def reshape(x, shape):
 
 class Transpose(Function):
     def forward(self, x):
-        y = np.transpose(x)
+        xp = cuda.get_array_module(x)
+        y = np.transpose(xp)
         return y
     
     def backward(self, gy):
@@ -108,7 +113,8 @@ class BroadcastTo(Function):
     
     def forward(self, x):
         self.x_shape = x.shape
-        y = np.broadcast_to(x, self.shape)
+        xp = cuda.get_array_module(x)
+        y = np.broadcast_to(xp, self.shape)
         return y
     
     def backward(self, gy):
@@ -177,9 +183,59 @@ def linear_simple(x, W, b = None):
     t.data = None
     return y
 
+class Log(Function):
+    def forward(self, x):
+        xp = cuda.get_array_module(x)
+        y = np.log(xp)
+        return y
+    def backward(self, gy):
+        x, = self.inputs         # 입력 하나만 언패킹
+        return gy / x            # d/dx log(x) = 1/x
+
+def log(x):
+    return Log()(x)
 
 def sigmoid_simple(x):
     x = as_variable(x)
     y = 1 / (1 + exp(-x))
     return y
+
+def softmax_simple(x, axis = 1):
+    x = as_variable(x)
+    y = exp(x)
+    sum_y = sum(y, axis=axis, keepdims=True)
+    return y / sum_y
+
+
+def softmax_cross_entropy_simple(x, t):
+    x, t = as_variable(x), as_variable(t)
+    N = x.shape[0]
+    
+    p = softmax_simple(x)
+    log_p = log(p + 1e-15)
+    tlog_p = log_p[np.arange(N), t.data]
+    y = -1 * sum(tlog_p) / N
+    return y
+
+def accuarcy(y, t):
+    y, t = as_variable(y), as_variable(t)
+    
+    pred = y.data.argmax(axis=1).reshape(t.shape)
+    result = (pred == t.data)
+    acc = result.mean()
+    return Variable(as_array(acc))
+
+class ReLU(Function):
+    def forward(self, x):
+        xp = cuda.get_array_module(x)
+        y = np.maximum(xp, 0.0)
+        return y
+    def backward(self, gy):
+        x, = self.inputs
+        mask = x.data > 0
+        gx = gy * mask
+        return gx
+    
+def relu(x):
+    return ReLU()(x)
 
