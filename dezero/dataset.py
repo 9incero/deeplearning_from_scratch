@@ -82,11 +82,9 @@ class MNIST(Dataset):
         super().__init__(train, transform, target_transform)
 
     def prepare(self):
-        url = 'http://yann.lecun.com/exdb/mnist/'
-        train_files = {'target': 'train-images-idx3-ubyte.gz',
-                       'label': 'train-labels-idx1-ubyte.gz'}
-        test_files = {'target': 't10k-images-idx3-ubyte.gz',
-                      'label': 't10k-labels-idx1-ubyte.gz'}
+        url = "https://raw.githubusercontent.com/fgnt/mnist/master/"
+        train_files = {"target": "train-images-idx3-ubyte.gz", "label": "train-labels-idx1-ubyte.gz"}
+        test_files = {"target": "t10k-images-idx3-ubyte.gz", "label": "t10k-labels-idx1-ubyte.gz"}
 
         files = train_files if self.train else test_files
         data_path = get_file(url + files['target'])

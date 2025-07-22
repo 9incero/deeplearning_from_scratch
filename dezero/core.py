@@ -39,6 +39,10 @@ class Variable:
         p=str(self.data).replace('\n','\n'+' '*9)
         return 'variable('+p+')'
     
+    def to_cpu(self):
+        if self.data is not None:
+            self.data = np.asanyarray(self.data)  # cupy → numpy
+    
     @property
     def shape(self):
         return self.data.shape

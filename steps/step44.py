@@ -37,3 +37,4 @@ for i in range(iters):
             p.data -= lr*p.grad.data
     if i % 1000 ==0:
         print(loss)
+        
